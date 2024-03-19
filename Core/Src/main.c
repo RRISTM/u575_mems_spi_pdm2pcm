@@ -50,7 +50,7 @@
 
 CRC_HandleTypeDef hcrc;
 
-SPI_HandleTypeDef hspi1;
+SAI_HandleTypeDef hsai_BlockA1;
 DMA_NodeTypeDef Node_GPDMA1_Channel0;
 DMA_QListTypeDef List_GPDMA1_Channel0;
 DMA_HandleTypeDef handle_GPDMA1_Channel0;
@@ -72,15 +72,16 @@ uint32_t ret_val;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_GPDMA1_Init(void);
-static void MX_SPI1_Init(void);
 static void MX_CRC_Init(void);
+static void MX_SAI1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi)
+// void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi)
+void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hsai)
 {
   ret_val = PDM_Filter((uint8_t *)(&u8SpiRxBuf[0]), &u16PcmBuf[output_ptr], &PDM1_filter_handler);
   output_ptr += STEP_OUT;
@@ -90,8 +91,8 @@ void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi)
       ;
   }
 }
-
-void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
+void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai)
+// void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
   ret_val = PDM_Filter((uint8_t *)(&u8SpiRxBuf[STEP_IN]), &u16PcmBuf[output_ptr], &PDM1_filter_handler);
   output_ptr += STEP_OUT;
@@ -134,14 +135,15 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_GPDMA1_Init();
-  MX_SPI1_Init();
   MX_CRC_Init();
+  MX_SAI1_Init();
   /* USER CODE BEGIN 2 */
   MX_CRC_Init();
   /* USER CODE BEGIN 2 */
   MX_PDM2PCM_Init();
 
-  HAL_SPI_Receive_DMA(&hspi1, u8SpiRxBuf, STEP_IN * 2);
+  // HAL_SPI_Receive_DMA(&hspi1, u8SpiRxBuf, STEP_IN * 2);
+  HAL_SAI_Receive_DMA(&hsai_BlockA1, u8SpiRxBuf, STEP_IN * 2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -269,59 +271,53 @@ static void MX_GPDMA1_Init(void)
 }
 
 /**
-  * @brief SPI1 Initialization Function
+  * @brief SAI1 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_SPI1_Init(void)
+static void MX_SAI1_Init(void)
 {
 
-  /* USER CODE BEGIN SPI1_Init 0 */
+  /* USER CODE BEGIN SAI1_Init 0 */
 
-  /* USER CODE END SPI1_Init 0 */
+  /* USER CODE END SAI1_Init 0 */
 
-  SPI_AutonomousModeConfTypeDef HAL_SPI_AutonomousMode_Cfg_Struct = {0};
+  /* USER CODE BEGIN SAI1_Init 1 */
 
-  /* USER CODE BEGIN SPI1_Init 1 */
-
-  /* USER CODE END SPI1_Init 1 */
-  /* SPI1 parameter configuration*/
-  hspi1.Instance = SPI1;
-  hspi1.Init.Mode = SPI_MODE_MASTER;
-  hspi1.Init.Direction = SPI_DIRECTION_2LINES_RXONLY;
-  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
-  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1.Init.CRCPolynomial = 0x7;
-  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  hspi1.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
-  hspi1.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
-  hspi1.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
-  hspi1.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
-  hspi1.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-  hspi1.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
-  hspi1.Init.IOSwap = SPI_IO_SWAP_DISABLE;
-  hspi1.Init.ReadyMasterManagement = SPI_RDY_MASTER_MANAGEMENT_INTERNALLY;
-  hspi1.Init.ReadyPolarity = SPI_RDY_POLARITY_HIGH;
-  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  /* USER CODE END SAI1_Init 1 */
+  hsai_BlockA1.Instance = SAI1_Block_A;
+  hsai_BlockA1.Init.Protocol = SAI_FREE_PROTOCOL;
+  hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_RX;
+  hsai_BlockA1.Init.DataSize = SAI_DATASIZE_8;
+  hsai_BlockA1.Init.FirstBit = SAI_FIRSTBIT_MSB;
+  hsai_BlockA1.Init.ClockStrobing = SAI_CLOCKSTROBING_FALLINGEDGE;
+  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
+  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+  hsai_BlockA1.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
+  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockA1.Init.AudioFrequency = 256000;
+  hsai_BlockA1.Init.MckOutput = SAI_MCK_OUTPUT_DISABLE;
+  hsai_BlockA1.Init.MonoStereoMode = SAI_MONOMODE;
+  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
+  hsai_BlockA1.Init.PdmInit.Activation = ENABLE;
+  hsai_BlockA1.Init.PdmInit.MicPairsNbr = 1;
+  hsai_BlockA1.Init.PdmInit.ClockEnable = SAI_PDM_CLOCK2_ENABLE;
+  hsai_BlockA1.FrameInit.FrameLength = 16;
+  hsai_BlockA1.FrameInit.ActiveFrameLength = 1;
+  hsai_BlockA1.FrameInit.FSDefinition = SAI_FS_STARTFRAME;
+  hsai_BlockA1.FrameInit.FSPolarity = SAI_FS_ACTIVE_LOW;
+  hsai_BlockA1.FrameInit.FSOffset = SAI_FS_FIRSTBIT;
+  hsai_BlockA1.SlotInit.FirstBitOffset = 0;
+  hsai_BlockA1.SlotInit.SlotSize = SAI_SLOTSIZE_DATASIZE;
+  hsai_BlockA1.SlotInit.SlotNumber = 2;
+  hsai_BlockA1.SlotInit.SlotActive = 0x00000001;
+  if (HAL_SAI_Init(&hsai_BlockA1) != HAL_OK)
   {
     Error_Handler();
   }
-  HAL_SPI_AutonomousMode_Cfg_Struct.TriggerState = SPI_AUTO_MODE_DISABLE;
-  HAL_SPI_AutonomousMode_Cfg_Struct.TriggerSelection = SPI_GRP1_GPDMA_CH0_TCF_TRG;
-  HAL_SPI_AutonomousMode_Cfg_Struct.TriggerPolarity = SPI_TRIG_POLARITY_RISING;
-  if (HAL_SPIEx_SetConfigAutonomousMode(&hspi1, &HAL_SPI_AutonomousMode_Cfg_Struct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN SPI1_Init 2 */
+  /* USER CODE BEGIN SAI1_Init 2 */
 
-  /* USER CODE END SPI1_Init 2 */
+  /* USER CODE END SAI1_Init 2 */
 
 }
 
@@ -336,7 +332,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

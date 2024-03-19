@@ -23,11 +23,6 @@
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
-extern DMA_NodeTypeDef Node_GPDMA1_Channel0;
-
-extern DMA_QListTypeDef List_GPDMA1_Channel0;
-
-extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
@@ -125,51 +120,64 @@ void HAL_CRC_MspDeInit(CRC_HandleTypeDef* hcrc)
 
 }
 
-/**
-* @brief SPI MSP Initialization
-* This function configures the hardware resources used in this example
-* @param hspi: SPI handle pointer
-* @retval None
-*/
-void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
+extern DMA_NodeTypeDef Node_GPDMA1_Channel0;
+
+extern DMA_QListTypeDef List_GPDMA1_Channel0;
+
+extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
+
+static uint32_t SAI1_client =0;
+
+void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  GPIO_InitTypeDef GPIO_InitStruct;
   DMA_NodeConfTypeDef NodeConfig;
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
-  if(hspi->Instance==SPI1)
-  {
-  /* USER CODE BEGIN SPI1_MspInit 0 */
-
-  /* USER CODE END SPI1_MspInit 0 */
+/* SAI1 */
+    if(hsai->Instance==SAI1_Block_A)
+    {
+    /* Peripheral clock enable */
 
   /** Initializes the peripherals clock
   */
-    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_SPI1;
-    PeriphClkInit.Spi1ClockSelection = RCC_SPI1CLKSOURCE_PCLK2;
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_SAI1;
+    PeriphClkInit.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL2;
+    PeriphClkInit.PLL2.PLL2Source = RCC_PLLSOURCE_MSI;
+    PeriphClkInit.PLL2.PLL2M = 1;
+    PeriphClkInit.PLL2.PLL2N = 80;
+    PeriphClkInit.PLL2.PLL2P = 2;
+    PeriphClkInit.PLL2.PLL2Q = 2;
+    PeriphClkInit.PLL2.PLL2R = 2;
+    PeriphClkInit.PLL2.PLL2RGE = RCC_PLLVCIRANGE_0;
+    PeriphClkInit.PLL2.PLL2FRACN = 0;
+    PeriphClkInit.PLL2.PLL2ClockOut = RCC_PLL2_DIVP;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
     {
       Error_Handler();
     }
 
-    /* Peripheral clock enable */
-    __HAL_RCC_SPI1_CLK_ENABLE();
+    if (SAI1_client == 0)
+    {
+       __HAL_RCC_SAI1_CLK_ENABLE();
+    }
+    SAI1_client ++;
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**SPI1 GPIO Configuration
-    PA1     ------> SPI1_SCK
-    PA6     ------> SPI1_MISO
+    /**SAI1_A_Block_A GPIO Configuration
+    PE5     ------> SAI1_CK2
+    PE6     ------> SAI1_D1
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_6;
+    GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    GPIO_InitStruct.Alternate = GPIO_AF3_SAI1;
+    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-    /* SPI1 DMA Init */
-    /* GPDMA1_REQUEST_SPI1_RX Init */
+      /* Peripheral DMA init*/
+
     NodeConfig.NodeType = DMA_GPDMA_LINEAR_NODE;
-    NodeConfig.Init.Request = GPDMA1_REQUEST_SPI1_RX;
+    NodeConfig.Init.Request = GPDMA1_REQUEST_SAI1_A;
     NodeConfig.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
     NodeConfig.Init.Direction = DMA_PERIPH_TO_MEMORY;
     NodeConfig.Init.SrcInc = DMA_SINC_FIXED;
@@ -215,55 +223,37 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
       Error_Handler();
     }
 
-    __HAL_LINKDMA(hspi, hdmarx, handle_GPDMA1_Channel0);
+    __HAL_LINKDMA(hsai, hdmarx, handle_GPDMA1_Channel0);
 
     if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel0, DMA_CHANNEL_NPRIV) != HAL_OK)
     {
       Error_Handler();
     }
 
-    /* SPI1 interrupt Init */
-    HAL_NVIC_SetPriority(SPI1_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(SPI1_IRQn);
-  /* USER CODE BEGIN SPI1_MspInit 1 */
-
-  /* USER CODE END SPI1_MspInit 1 */
-  }
-
+    }
 }
 
-/**
-* @brief SPI MSP De-Initialization
-* This function freeze the hardware resources used in this example
-* @param hspi: SPI handle pointer
-* @retval None
-*/
-void HAL_SPI_MspDeInit(SPI_HandleTypeDef* hspi)
+void HAL_SAI_MspDeInit(SAI_HandleTypeDef* hsai)
 {
-  if(hspi->Instance==SPI1)
-  {
-  /* USER CODE BEGIN SPI1_MspDeInit 0 */
+/* SAI1 */
+    if(hsai->Instance==SAI1_Block_A)
+    {
+    SAI1_client --;
+    if (SAI1_client == 0)
+      {
+      /* Peripheral clock disable */
+       __HAL_RCC_SAI1_CLK_DISABLE();
+      }
 
-  /* USER CODE END SPI1_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_SPI1_CLK_DISABLE();
-
-    /**SPI1 GPIO Configuration
-    PA1     ------> SPI1_SCK
-    PA6     ------> SPI1_MISO
+    /**SAI1_A_Block_A GPIO Configuration
+    PE5     ------> SAI1_CK2
+    PE6     ------> SAI1_D1
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_1|GPIO_PIN_6);
+    HAL_GPIO_DeInit(GPIOE, GPIO_PIN_5|GPIO_PIN_6);
 
-    /* SPI1 DMA DeInit */
-    HAL_DMA_DeInit(hspi->hdmarx);
-
-    /* SPI1 interrupt DeInit */
-    HAL_NVIC_DisableIRQ(SPI1_IRQn);
-  /* USER CODE BEGIN SPI1_MspDeInit 1 */
-
-  /* USER CODE END SPI1_MspDeInit 1 */
-  }
-
+    /* SAI1 DMA Deinit */
+    HAL_DMA_DeInit(hsai->hdmarx);
+    }
 }
 
 /* USER CODE BEGIN 1 */

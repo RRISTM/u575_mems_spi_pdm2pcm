@@ -297,7 +297,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
   hsai_BlockA1.Init.AudioFrequency = 256000;
   hsai_BlockA1.Init.MckOutput = SAI_MCK_OUTPUT_DISABLE;
-  hsai_BlockA1.Init.MonoStereoMode = SAI_MONOMODE;
+  hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockA1.Init.PdmInit.Activation = ENABLE;
   hsai_BlockA1.Init.PdmInit.MicPairsNbr = 1;
@@ -305,7 +305,7 @@ static void MX_SAI1_Init(void)
   hsai_BlockA1.FrameInit.FrameLength = 16;
   hsai_BlockA1.FrameInit.ActiveFrameLength = 1;
   hsai_BlockA1.FrameInit.FSDefinition = SAI_FS_STARTFRAME;
-  hsai_BlockA1.FrameInit.FSPolarity = SAI_FS_ACTIVE_LOW;
+  hsai_BlockA1.FrameInit.FSPolarity = SAI_FS_ACTIVE_HIGH;
   hsai_BlockA1.FrameInit.FSOffset = SAI_FS_FIRSTBIT;
   hsai_BlockA1.SlotInit.FirstBitOffset = 0;
   hsai_BlockA1.SlotInit.SlotSize = SAI_SLOTSIZE_DATASIZE;
